@@ -1,0 +1,234 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+#define MAX_SIZE 100
+
+// Stack structure
+typedef struct {
+    int top;
+    int items[MAX_SIZE];
+} Stack;
+
+// Function prototypes
+void push(Stack* stack, int value);
+int pop(Stack* stack);
+int evaluatePostfix(char* postfix);
+int evaluatePrefix(char* prefix);
+int evaluateInfix(char* infix);
+
+int main() {
+    char postfix[MAX_SIZE], prefix[MAX_SIZE], infix[MAX_SIZE];
+
+    printf("Enter a postfix expression: ");
+    fgets(postfix, MAX_SIZE, stdin);
+    int resultPostfix = evaluatePostfix(postfix);
+    printf("Postfix evaluation result: %d\n", resultPostfix);
+
+    printf("Enter a prefix expression: ");
+    fgets(prefix, MAX_SIZE, stdin);
+    int resultPrefix = evaluatePrefix(prefix);
+    printf("Prefix evaluation result: %d\n", resultPrefix);
+
+    printf("Enter an infix expression: ");
+    fgets(infix, MAX_SIZE, stdin);
+    int resultInfix = evaluateInfix(infix);
+    printf("Infix evaluation result: %d\n", resultInfix);
+
+    return 0;
+}
+
+// Function to push an element onto the stack
+void push(Stack* stack, int value) {
+    if (stack->top == MAX_SIZE - 1) {
+        printf("Stack Overflow\n");
+        exit(EXIT_FAILURE);
+    }
+    stack->items[++stack->top] = value;
+}
+
+// Function to pop an element from the stack
+int pop(Stack* stack) {
+    if (stack->top == -1) {
+        printf("Stack Underflow\n");
+        exit(EXIT_FAILURE);
+    }
+    return stack->items[stack->top--];
+}
+
+// Function to evaluate a postfix expression
+int evaluatePostfix(char* postfix) {
+    Stack stack;
+    stack.top = -1;
+
+    for (int i = 0; postfix[i] != '\0'; i++) {
+        char ch = postfix[i];
+
+        if (isdigit(ch)) {
+            push(&stack, ch - '0');
+        } else {
+            int operand2 = pop(&stack);
+            int operand1 = pop(&stack);
+
+            switch (ch) {
+                case '+':
+                    push(&stack, operand1 + operand2);
+                    break;
+                case '-':
+                    push(&stack, operand1 - operand2);
+                    break;
+                case '*':
+                    push(&stack, operand1 * operand2);
+                    break;
+                case '/':
+                    push(&stack, operand1 / operand2);
+                    break;
+                case '%':
+                    push(&stack, operand1 % operand2);
+                    break;
+            }
+        }
+    }
+
+    return pop(&stack);
+}
+
+// Function to evaluate a prefix expression
+int evaluatePrefix(char* prefix) {
+    Stack stack;
+    stack.top = -1;
+
+    int length = strlen(prefix);
+    for (int i = length - 1; i >= 0; i--) {
+        char ch = prefix[i];
+
+        if (isdigit(ch)) {
+            push(&stack, ch - '0');
+        } else {
+            int operand1 = pop(&stack);
+            int operand2 = pop(&stack);
+
+            switch (ch) {
+                case '+':
+                    push(&stack, operand1 + operand2);
+                    break;
+                case '-':
+                    push(&stack, operand1 - operand2);
+                    break;
+                case '*':
+                    push(&stack, operand1 * operand2);
+                    break;
+                case '/':
+                    push(&stack, operand1 / operand2);
+                    break;
+                case '%':
+                    push(&stack, operand1 % operand2);
+                    break;
+            }
+        }
+    }
+
+    return pop(&stack);
+}
+
+// Function to evaluate an infix expression
+int evaluateInfix(char* infix) {
+    Stack stack;
+    stack.top = -1;
+
+    int result = 0;
+    int length = strlen(infix);
+
+    for (int i = 0; i < length; i++) {
+        char ch = infix[i];
+
+        if (isdigit(ch)) {
+            int num = 0;
+            while (isdigit(infix[i])) {
+                num = num * 10 + (infix[i] - '0');
+                i++;
+            }
+            i--;
+            push(&stack, num);
+        } else if (ch == '(') {
+            push(&stack, ch);
+        } else if (ch == ')') {
+            while (stack.items[stack.top] != '(') {
+                int operand2 = pop(&stack);
+                int operand1 = pop(&stack);
+                char operator = pop(&stack);
+
+                switch (operator) {
+                    case '+':
+                        push(&stack, operand1 + operand2);
+                        break;
+                    case '-':
+                        push(&stack, operand1 - operand2);
+                        break;
+                    case '*':
+                        push(&stack, operand1 * operand2);
+                        break;
+                    case '/':
+                        push(&stack, operand1 / operand2);
+                        break;
+                    case '%':
+                        push(&stack, operand1 % operand2);
+                        break;
+                }
+            }
+            // Pop the opening '('
+            pop(&stack);
+        } else if (ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '%') {
+            while (stack.top != -1 && stack.items[stack.top] != '(' && (ch != '*' && ch != '/') && (stack.items[stack.top] == '*' || stack.items[stack.top] == '/')) {
+                int operand2 = pop(&stack);
+                int operand1 = pop(&stack);
+                char operator = pop(&stack);
+
+                switch (operator) {
+                    case '+':
+                        push(&stack, operand1 + operand2);
+                        break;
+                    case '-':
+                        push(&stack, operand1 - operand2);
+                        break;
+                    case '*':
+                        push(&stack, operand1 * operand2);
+                        break;
+                    case '/':
+                        push(&stack, operand1 / operand2);
+                        break;
+                    case '%':
+                        push(&stack, operand1 % operand2);
+                        break;
+                }
+            }
+            push(&stack, ch);
+        }
+    }
+
+    while (stack.top != -1) {
+        int operand2 = pop(&stack);
+        int operand1 = pop(&stack);
+        char operator = pop(&stack);
+
+        switch (operator) {
+            case '+':
+                push(&stack, operand1 + operand2);
+                break;
+            case '-':
+                push(&stack, operand1 - operand2);
+                break;
+            case '*':
+                push(&stack, operand1 * operand2);
+                break;
+            case '/':
+                push(&stack, operand1 / operand2);
+                break;
+            case '%':
+                push(&stack, operand1 % operand2);
+                break;
+        }
+    }
+
+    return pop(&stack);
+}
